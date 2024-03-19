@@ -62,7 +62,7 @@ export const presets = {
 		explosiveness: 0,
 		spread: 15,
 		emitterScale: { x: 0, y: 0, z: 0 },
-		emitterPosition: { x: 0, y: 1, z: 0 },
+		emitterPosition: { x: 0, y: 0, z: 0 },
 		velocity: 4,
 		velocityRandom: 0,
 		dampen: true,
