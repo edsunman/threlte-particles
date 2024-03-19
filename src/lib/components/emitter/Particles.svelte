@@ -172,16 +172,16 @@
 	};
 
 	const positionNewParticle = (index: number) => {
-		//if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z) {
-		newPosition = ramdomPointInsideCube(position, emitterScale);
-		positionAttributeArray[index * 3] = newPosition.x;
-		positionAttributeArray[index * 3 + 1] = newPosition.y;
-		positionAttributeArray[index * 3 + 2] = newPosition.z;
-		//} else {
-		//	positionAttributeArray[index * 3] = position.x;
-		//	positionAttributeArray[index * 3 + 1] = position.y;
-		//	positionAttributeArray[index * 3 + 2] = position.z;
-		//	}
+		if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z) {
+			newPosition = ramdomPointInsideCube(position, emitterScale);
+			positionAttributeArray[index * 3] = newPosition.x;
+			positionAttributeArray[index * 3 + 1] = newPosition.y;
+			positionAttributeArray[index * 3 + 2] = newPosition.z;
+		} else {
+			positionAttributeArray[index * 3] = position.x;
+			positionAttributeArray[index * 3 + 1] = position.y;
+			positionAttributeArray[index * 3 + 2] = position.z;
+		}
 	};
 
 	const stateChanged = () => {
