@@ -106,7 +106,9 @@
 				velocityRandom > 0
 					? randomNumber(velocity - velocityRandom / 2, velocity + velocityRandom / 2)
 					: velocity;
-			const pSize = sizeRandom > 0 ? randomNumber(-sizeRandom / 2, sizeRandom / 2) : 0;
+			let pSize = sizeRandom > 0 ? randomNumber(-sizeRandom / 2, sizeRandom / 2) : 0;
+			pSize = pSize < 0 ? 0 : pSize;
+			console.log(pSize);
 			const pColor = colorRandom > 0 ? randomNumber(-colorRandom / 2, colorRandom / 2) : 0;
 			const pLightness =
 				lightnessRandom > 0 ? randomNumber(-lightnessRandom / 2, lightnessRandom / 2) : 0;
