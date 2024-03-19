@@ -71,7 +71,6 @@
 	};
 
 	const resetEmitter = () => {
-		console.log('resetting');
 		reset = Math.random();
 	};
 
