@@ -18,10 +18,10 @@ const parseGradientString = (gradientString: string) => {
 	// strip whitespace
 	gradientString = gradientString.replaceAll(' ', '');
 	// identify stops as being between a ) and %
-	const stops = gradientString.match(/(?<=\))(.*?)(?=%)/g);
+	const stops = gradientString.match(/[^)]+(?=%)/g);
 	if (!stops) return;
 	// identify values as being between a ( and ) eg '0,255,0,1'
-	const values = gradientString.match(/(?<=\()(.*?)(?=\))/g);
+	const values = gradientString.match(/[^(]+(?=\))/g);
 	if (!values || stops.length !== values.length) return;
 	const rgba = gradientString.includes('rgba');
 	let lastStop, lastValue;
