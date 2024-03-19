@@ -59,6 +59,7 @@ export const createGradientObject = (gradientString: string, valueCount: number)
 		return gradientObject;
 	} else {
 		// string incorrectly formatted so just show white
+		console.warn('particles: gradient string incorrectly formatted');
 		return {
 			stops: new Array(4).fill(1),
 			values: new Array(valueCount).fill(1)

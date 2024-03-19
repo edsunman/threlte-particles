@@ -74,7 +74,7 @@ export const presets = {
 		gravity: { x: 0, y: 0, z: 0 },
 		direction: { x: 0, y: 1, z: 0 },
 		wind: { x: 4, y: 0, z: 0 },
-		size: 'size(15) 0%, size(40) 100%',
+		size: 'size(10) 0%, size(40) 100%',
 		sizeRandom: 5,
 		rotation: 0,
 		rotationRandom: 5,

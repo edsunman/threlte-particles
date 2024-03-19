@@ -55,6 +55,9 @@
 	export let alphaMap: Texture | undefined = undefined;
 	export let map: Texture | undefined = undefined;
 
+	const { renderer } = useThrelte();
+	const pixelRatio = renderer.getPixelRatio();
+
 	let position = new Vector3(emitterPosition.x, emitterPosition.y, emitterPosition.z);
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
 	let emitterLife = 0;
@@ -75,7 +78,7 @@
 
 	export const start = () => {
 		if (state !== 'finished') {
-			console.warn('start() was called but the emitter is ' + state + ', not finished.');
+			console.warn('particles: start() was called but the emitter is ' + state + ', not finished.');
 			return;
 		}
 		paused = false;
@@ -84,11 +87,11 @@
 
 	export const stop = () => {
 		if (oneShot) {
-			console.warn('stop() has no effect when oneShot is set to true.');
+			console.warn('particles: stop() has no effect when oneShot is set to true.');
 			return;
 		}
 		if (state !== 'running') {
-			console.warn('stop() was called but the emitter is ' + state + ', not running.');
+			console.warn('particles: stop() was called but the emitter is ' + state + ', not running.');
 			return;
 		}
 		paused = true;
@@ -108,7 +111,6 @@
 					: velocity;
 			let pSize = sizeRandom > 0 ? randomNumber(-sizeRandom / 2, sizeRandom / 2) : 0;
 			pSize = pSize < 0 ? 0 : pSize;
-			console.log(pSize);
 			const pColor = colorRandom > 0 ? randomNumber(-colorRandom / 2, colorRandom / 2) : 0;
 			const pLightness =
 				lightnessRandom > 0 ? randomNumber(-lightnessRandom / 2, lightnessRandom / 2) : 0;
@@ -326,6 +328,9 @@
 			},
 			useClamp: {
 				value: clampAlpha ? 1 : 0
+			},
+			screenPixelRatio: {
+				value: pixelRatio ? pixelRatio : 1
 			}
 		}}
 	/>
