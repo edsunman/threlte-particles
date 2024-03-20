@@ -2,7 +2,14 @@
 	import { T, useTask } from '@threlte/core';
 	import { ContactShadows, Float, Grid, OrbitControls } from '@threlte/extras';
 	import Particles from './emitter/Particles.svelte';
-	import { BoxGeometry, MeshBasicMaterial, ShaderMaterial, SphereGeometry, Vector3 } from 'three';
+	import {
+		BoxGeometry,
+		DefaultLoadingManager,
+		MeshBasicMaterial,
+		ShaderMaterial,
+		SphereGeometry,
+		Vector3
+	} from 'three';
 	import { useTexture, TransformControls } from '@threlte/extras';
 	import {
 		Pane,
@@ -57,10 +64,12 @@
 	let wind = { x: 0, y: 0, z: 0 };
 	let size = 'size(5) 0%, size(20) 100%';
 	let sizeRandom = 10;
-	let rotation = 0;
+	let textureRotation = 0;
 	let rotationRandom = 0;
 	let driftAmount = 0;
 	let driftSpeed = 0;
+	let r = 0;
+	let spinEmitter = false;
 
 	const startParticles = () => {
 		start();
@@ -94,7 +103,7 @@
 		wind;
 		size;
 		sizeRandom;
-		rotation;
+		textureRotation;
 		rotationRandom;
 		driftAmount;
 		driftSpeed;
@@ -122,11 +131,12 @@
 		wind = preset.wind;
 		size = preset.size;
 		sizeRandom = preset.sizeRandom;
-		rotation = preset.rotation;
+		textureRotation = preset.textureRotation;
 		rotationRandom = preset.rotationRandom;
 		driftAmount = preset.driftAmount;
 		driftSpeed = preset.driftSpeed;
 		selectedTextureIndex = preset.selectedTextureIndex;
+		spinEmitter = Object.hasOwn(preset, 'spinEmitter') ? true : false;
 	};
 
 	const generateComponent = () => {
@@ -140,7 +150,12 @@
 		alert('Copied to clipboard');
 	};
 
-	useTask(() => {
+	useTask((delta) => {
+		if (spinEmitter) {
+			r += delta * 3;
+		} else {
+			r = 0;
+		}
 		if (box) {
 			emitterPosition.x = box.position.x;
 			emitterPosition.y = box.position.y;
@@ -238,11 +253,11 @@
 			label="size random"
 		/>
 		<Slider
-			bind:value={rotation}
+			bind:value={textureRotation}
 			min={-10}
 			max={10}
 			format={(v) => v.toFixed(1)}
-			label="rotation"
+			label="texture rotation"
 		/>
 		<Slider
 			bind:value={rotationRandom}
@@ -263,6 +278,7 @@
 		<Button on:click={() => applyPreset(presets['fountain'])} title="fountain" />
 		<Button on:click={() => applyPreset(presets['snow'])} title="snow" />
 		<Button on:click={() => applyPreset(presets['fire'])} title="fire" />
+		<Button on:click={() => applyPreset(presets['tornado'])} title="tornado" />
 		<Button on:click={() => applyPreset(presets['fireflies'])} title="fireflies" />
 		<Separator />
 		<Button on:click={() => generateComponent()} title="Generate Component" />
@@ -272,10 +288,11 @@
 {#key reset}
 	{#await textures then t}
 		<Particles
+			rotation.y={r}
 			{clampAlpha}
 			{debug}
 			{emitterPosition}
-			{rotation}
+			{textureRotation}
 			{emitterScale}
 			{count}
 			{life}

@@ -4,10 +4,12 @@
 		BufferGeometry,
 		Float32BufferAttribute,
 		Vector3,
-		type Texture,
+		Matrix4,
 		ShaderMaterial,
 		NormalBlending,
-		AdditiveBlending
+		AdditiveBlending,
+		type Texture,
+		type Points
 	} from 'three';
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -57,7 +59,7 @@
 	/** Value between 0 and 1 to randomise the lightness. */
 	export let lightnessRandom = 0;
 	/** Speed to rotate the texture. */
-	export let rotation = 0;
+	export let textureRotation = 0;
 	/** Randomise the rotation by this amount in both diretions. */
 	export let rotationRandom = 0;
 	/** Slow the particle to a stop over it's life. */
@@ -137,8 +139,8 @@
 				lightnessRandom > 0 ? randomNumber(-lightnessRandom / 2, lightnessRandom / 2) : 0;
 			const pRotation =
 				rotationRandom > 0
-					? randomNumber(rotation - rotationRandom / 2, rotation + rotationRandom / 2)
-					: rotation;
+					? randomNumber(textureRotation - rotationRandom / 2, textureRotation + rotationRandom / 2)
+					: textureRotation;
 			pDirection.multiplyScalar(pVelocity);
 			const pRandomSeed = Math.random();
 			particles.push({
@@ -356,7 +358,7 @@
 		}}
 	/>
 </T.Points>
-
+<!-- TODO: this box is not in the correct place when the emitter position is not 0,0,0 -->
 <T.Mesh
 	let:ref
 	scale={[emitterScale.x, emitterScale.y, emitterScale.z]}
