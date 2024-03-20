@@ -66,9 +66,6 @@
 	export let dampen = false;
 	/** Run the emitter once then stop. */
 	export let oneShot = false;
-	/** Show emitter outline. */
-	export let debug = false;
-	export let boundingSphereRadius = 5;
 	/** Clamp alpha map values for a hard edge stylised look */
 	export let clampAlpha = false;
 	/** Blend transparent particles for a glow effect */
@@ -77,6 +74,9 @@
 	export let alphaMap: Texture | undefined = undefined;
 	/** Texture */
 	export let map: Texture | undefined = undefined;
+	/** Show emitter outline. */
+	export let debug = false;
+	export let boundingSphereRadius = 5;
 
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();

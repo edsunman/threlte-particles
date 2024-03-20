@@ -142,9 +142,29 @@
 	const generateComponent = () => {
 		navigator.clipboard.writeText(`<Particles
 	emitterPosition={{x:${emitterPosition.x},y:${emitterPosition.y},z:${emitterPosition.z}}}
-	clampAlpha={${clampAlpha}}
+	emitterScale={{x:${emitterScale.x},y:${emitterScale.y},z:${emitterScale.z}}}
+	count={${count}}
+	life={${life}}
+	explosiveness={${explosiveness}}
+	spread={${spread}}
+	direction={{x:${direction.x},y:${direction.y},z:${direction.z}}}
+	direction={{x:${wind.x},y:${wind.y},z:${wind.z}}}
+	driftSpeed={${driftSpeed}}
+	velocity={${velocity}}
+	velocityRandom={${velocityRandom}}
+	size={'${size}'}
+	sizeRandom={${sizeRandom}}
+	color={'${color}'}
+	colorRandom={${colorRandom}}
+	lightnessRandom={${lightnessRandom}}
+	textureRotation={${textureRotation}}
+	rotationRandom={${rotationRandom}}
+	dampen={${dampen}}
+	oneShot={${oneShot}}
+	clampAlpha={${driftAmount}}
+	additiveBlend={${driftAmount}}
+	{alphaMap}
 	{debug}
-	{emitterPosition}
 />`);
 
 		alert('Copied to clipboard');
