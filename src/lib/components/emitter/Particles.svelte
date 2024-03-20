@@ -19,40 +19,61 @@
 	import fragmentShader from './particles-fragment.glsl?raw';
 	import vertexShader from './particles-vertex.glsl?raw';
 
-	/** Position of the emitter */
+	/** Position of the emitter. You can update while the emitter is running. */
 	export let emitterPosition = { x: 0, y: 0, z: 0 };
-	/** Scale of the emitter. */
+	/** Scale of the emitter. You can update while the emitter is running. */
 	export let emitterScale = { x: 0, y: 0, z: 0 };
 	/** The number of particles. */
-	export let count = 10;
+	export let count = 5;
 	/** The life of each particle in seconds. */
 	export let life = 2;
 	/** Value between 0 and 1. Emit particles one after another or all at once. */
 	export let explosiveness = 0;
+	/** Value between 0 and 360 degrees. Gives the particles a random direction within this range.  */
 	export let spread = 0;
 	// TODO: direction should be reactive?
-	export let direction = { x: 0, y: 0, z: 0 };
+	/** Normalised direction vector. */
+	export let direction = { x: 0, y: 1, z: 0 };
+	/** Gravity direction vector. Higher numbers for stronger force. Gets stronger over life of particle. */
 	export let gravity = { x: 0, y: 0, z: 0 };
+	/** Gravity direction vector. Higher numbers for stronger force. Constant force over life of particle. */
 	export let wind = { x: 0, y: 0, z: 0 };
-	/** The drift speed. */
-	export let driftSpeed = 0;
+	/** Use in combination with driftSpeed to give the particles random movement. */
 	export let driftAmount = 0;
-	export let velocity = 1;
+	/** Use in combination with driftAmount to give the particles random movement. */
+	export let driftSpeed = 0;
+	/** Initial particle force. */
+	export let velocity = 3;
+	/** Randomise the velocity by this amount in both diretions. */
 	export let velocityRandom = 0;
-	export let size = '';
+	/** Size of particle over it's life. */
+	export let size: string | number = 3;
+	/** Randomise the size by this amount in both diretions. */
 	export let sizeRandom = 0;
+	/** Color of particle over it's life. */
 	export let color: string = '';
+	/** Value between 0 and 1 to randomise the hue. */
 	export let colorRandom = 0;
+	/** Value between 0 and 1 to randomise the lightness. */
 	export let lightnessRandom = 0;
+	/** Speed to rotate the texture. */
 	export let rotation = 0;
+	/** Randomise the rotation by this amount in both diretions. */
 	export let rotationRandom = 0;
-	export let dampen = true;
+	/** Slow the particle to a stop over it's life. */
+	export let dampen = false;
+	/** Run the emitter once then stop. */
 	export let oneShot = false;
+	/** Show emitter outline. */
 	export let debug = false;
 	export let boundingSphereRadius = 5;
+	/** Clamp alpha map values for a hard edge stylised look */
 	export let clampAlpha = false;
+	/** Blend transparent particles for a glow effect */
 	export let additiveBlend = false;
+	/** Texture for alpha values. White is opaque black is transparent. */
 	export let alphaMap: Texture | undefined = undefined;
+	/** Texture */
 	export let map: Texture | undefined = undefined;
 
 	const { renderer } = useThrelte();
@@ -209,7 +230,7 @@
 	$: positionUpdated(emitterPosition);
 
 	useTask((delta) => {
-		if (delta > 0.5) return;
+		//if (delta > 0.5) return;
 		emitterLife += delta;
 		let newState = 'running';
 		if (emitterLife < life) {

@@ -11,13 +11,14 @@ export function randomNumber(min = 0, max = 1) {
 
 const parseGradientString = (gradientString: string) => {
 	// todo : correctly order array
-	const object: any = {
+	const object: { stops: number[]; values: number[] } = {
 		stops: [],
 		values: []
 	};
 	// strip whitespace
 	gradientString = gradientString.replaceAll(' ', '');
 	// identify stops as being between a ) and %
+
 	const stops = gradientString.match(/[^)]+(?=%)/g);
 	if (!stops) return;
 	// identify values as being between a ( and ) eg '0,255,0,1'
@@ -40,12 +41,13 @@ const parseGradientString = (gradientString: string) => {
 			} else {
 				// size gradient
 				if (split.length !== 1) return;
-				lastValue = split[0];
+				lastValue = parseInt(split[0]);
 			}
 			object.values = object.values.concat(lastValue);
 			lastStop = parseInt(stops[i]) / 100;
 			object.stops.push(lastStop);
 		} else {
+			if (!lastStop || !lastValue) return;
 			object.stops.push(lastStop);
 			object.values = object.values.concat(lastValue);
 		}
@@ -53,13 +55,19 @@ const parseGradientString = (gradientString: string) => {
 	return object;
 };
 
-export const createGradientObject = (gradientString: string, valueCount: number) => {
+export const createGradientObject = (gradientString: string | number, valueCount: number) => {
+	if (typeof gradientString === 'number') {
+		// size is just a number not gradient string
+		return {
+			stops: new Array(4).fill(1),
+			values: new Array(valueCount).fill(gradientString)
+		};
+	}
 	const gradientObject = parseGradientString(gradientString);
 	if (gradientObject) {
 		return gradientObject;
 	} else {
 		// string incorrectly formatted so just show white
-		console.warn('particles: gradient string incorrectly formatted');
 		return {
 			stops: new Array(4).fill(1),
 			values: new Array(valueCount).fill(1)
