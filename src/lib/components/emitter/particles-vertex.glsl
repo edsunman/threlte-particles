@@ -24,8 +24,8 @@ varying float vReverseNormalLife;
 
 // TODO: alow custom easing function
 float easeOut(float x) {
-    //return sin((x * PI) / factor); // sine
-    return pow(x - 1.0, 3.0) * (1.0 - x) + 1.0; // quart
+    return -x * (x - 2.0);  // quart out
+
 }
 
 vec3 mod289(vec3 x) {

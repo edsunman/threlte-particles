@@ -129,6 +129,17 @@
 		selectedTextureIndex = preset.selectedTextureIndex;
 	};
 
+	const generateComponent = () => {
+		navigator.clipboard.writeText(`<Particles
+	emitterPosition={{x:${emitterPosition.x},y:${emitterPosition.y},z:${emitterPosition.z}}}
+	clampAlpha={${clampAlpha}}
+	{debug}
+	{emitterPosition}
+/>`);
+
+		alert('Copied to clipboard');
+	};
+
 	useTask(() => {
 		if (box) {
 			emitterPosition.x = box.position.x;
@@ -249,10 +260,12 @@
 		/>
 	</Folder>
 	<Folder title="Presets">
-		<Button on:click={() => applyPreset(presets['sparkles'])} title="sparkles" />
+		<Button on:click={() => applyPreset(presets['fountain'])} title="fountain" />
 		<Button on:click={() => applyPreset(presets['snow'])} title="snow" />
 		<Button on:click={() => applyPreset(presets['fire'])} title="fire" />
 		<Button on:click={() => applyPreset(presets['fireflies'])} title="fireflies" />
+		<Separator />
+		<Button on:click={() => generateComponent()} title="Generate Component" />
 	</Folder>
 </Pane>
 

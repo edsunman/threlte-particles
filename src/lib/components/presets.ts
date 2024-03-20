@@ -1,5 +1,5 @@
 export const presets = {
-	sparkles: {
+	fountain: {
 		emitterPosition: { x: 0, y: 0, z: 0 },
 		count: 150,
 		life: 3,
