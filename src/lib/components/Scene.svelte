@@ -150,6 +150,7 @@
 		driftSpeed = preset.driftSpeed;
 		selectedTextureIndex = preset.selectedTextureIndex;
 		spinEmitter = Object.hasOwn(preset, 'spinEmitter') ? true : false;
+		selectedMapIndex = 0;
 	};
 
 	const generateComponent = () => {
