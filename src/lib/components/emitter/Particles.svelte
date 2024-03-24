@@ -4,12 +4,10 @@
 		BufferGeometry,
 		Float32BufferAttribute,
 		Vector3,
-		Matrix4,
 		ShaderMaterial,
 		NormalBlending,
 		AdditiveBlending,
-		type Texture,
-		type Points
+		type Texture
 	} from 'three';
 	import { createEventDispatcher } from 'svelte';
 	import {
@@ -78,9 +76,6 @@
 	export let debug = false;
 	export let boundingSphereRadius = 5;
 
-	const { renderer } = useThrelte();
-	const pixelRatio = renderer.getPixelRatio();
-
 	let position = new Vector3(emitterPosition.x, emitterPosition.y, emitterPosition.z);
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
 	let emitterLife = 0;
@@ -92,12 +87,15 @@
 	let useMap = map ? 1 : 0;
 	let material: ShaderMaterial;
 
+	const { renderer } = useThrelte();
+	const pixelRatio = renderer.getPixelRatio();
 	const positionAttributeArray: number[] = [];
 	const lifeAttributeArray: number[] = [];
 	const parsedColorGradient = createGradientObject(color, 16);
 	const parsedSizeGradient = createGradientObject(size, 4);
 	const dispatch = createEventDispatcher();
 	const geometry = new BufferGeometry();
+	const particles: any = [];
 
 	export const start = () => {
 		if (state !== 'finished') {
@@ -121,10 +119,10 @@
 		pausedTime = emitterLife;
 	};
 
-	const particles: any = [];
-
-	// runs once when when component mounts
 	const setupParticles = () => {
+		if (map) map.flipY = false;
+		if (alphaMap) alphaMap.flipY = false;
+		console.log(map?.colorSpace);
 		for (let i = 0; i < count; i++) {
 			const pDirection = new Vector3().copy(directionVector.normalize());
 			if (spread > 0) pDirection.copy(randomDirectionSpread(pDirection, spread / 2));
@@ -232,7 +230,6 @@
 	$: positionUpdated(emitterPosition);
 
 	useTask((delta) => {
-		//if (delta > 0.5) return;
 		emitterLife += delta;
 		let newState = 'running';
 		if (emitterLife < life) {

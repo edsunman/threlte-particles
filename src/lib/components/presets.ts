@@ -25,7 +25,7 @@ export const presets = {
 		rotationRandom: 0,
 		driftAmount: 0,
 		driftSpeed: 0,
-		selectedTextureIndex: 0
+		selectedTextureIndex: 1
 	},
 	snow: {
 		count: 100,
@@ -53,7 +53,7 @@ export const presets = {
 		rotationRandom: 4,
 		driftAmount: 1,
 		driftSpeed: 1,
-		selectedTextureIndex: 2
+		selectedTextureIndex: 3
 	},
 	fire: {
 		count: 200,
@@ -80,7 +80,7 @@ export const presets = {
 		rotationRandom: 5,
 		driftAmount: 0.1,
 		driftSpeed: 0.1,
-		selectedTextureIndex: 1
+		selectedTextureIndex: 2
 	},
 	tornado: {
 		count: 250,
@@ -108,7 +108,7 @@ export const presets = {
 		rotationRandom: 3,
 		driftAmount: 0.3,
 		driftSpeed: 0,
-		selectedTextureIndex: 1,
+		selectedTextureIndex: 2,
 		spinEmitter: true
 	},
 	fireflies: {
@@ -137,6 +137,6 @@ export const presets = {
 		rotationRandom: 0,
 		driftAmount: 1,
 		driftSpeed: 1,
-		selectedTextureIndex: 0
+		selectedTextureIndex: 1
 	}
 };

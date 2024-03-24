@@ -1,15 +1,7 @@
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
-	import { ContactShadows, Float, Grid, OrbitControls } from '@threlte/extras';
+	import { Grid, OrbitControls } from '@threlte/extras';
 	import Particles from './emitter/Particles.svelte';
-	import {
-		BoxGeometry,
-		DefaultLoadingManager,
-		MeshBasicMaterial,
-		ShaderMaterial,
-		SphereGeometry,
-		Vector3
-	} from 'three';
 	import { useTexture, TransformControls } from '@threlte/extras';
 	import {
 		Pane,
@@ -21,24 +13,42 @@
 		Text,
 		Point,
 		Textarea,
-		List
+		List,
+		Element
 	} from 'svelte-tweakpane-ui';
 	import { presets } from './presets';
+	import { TextureLoader } from 'three';
 
-	const circleTexture = useTexture('/circle.png');
-	const smokeTexture = useTexture('/smoke.png');
-	const snowflakeTexture = useTexture('/snowflake.png');
-
-	const textures = Promise.all([
-		circleTexture.promise,
-		smokeTexture.promise,
-		snowflakeTexture.promise
+	/*
+	 *	Image Loading
+	 */
+	const imageUrls = ['', '/circle.png', '/smoke.png', '/snowflake.png', ''];
+	const mapUrls = ['', ''];
+	let texturesLoaded = false;
+	let textures: any;
+	let mapTextures: any = [false, false];
+	const texturesPromise = Promise.all([
+		useTexture('/circle.png'),
+		useTexture('/smoke.png'),
+		useTexture('/snowflake.png')
 	]);
+	texturesPromise.then((values) => {
+		textures = [false, ...values];
+		texturesLoaded = true;
+	});
+	const imageOptions: { [key: string]: number } = {
+		'no texture': 0,
+		'circle texture': 1,
+		'smoke texture': 2,
+		'snowflake texture': 3,
+		'custom texture': 4
+	};
 
 	let start: any;
 	let stop: any;
 	let box: any;
-	let selectedTextureIndex = 0;
+	let selectedTextureIndex = 1;
+	let selectedMapIndex = 0;
 	let emitterPosition = { x: 0, y: 0, z: 0 };
 	let state = '';
 	let reset = 0;
@@ -108,6 +118,9 @@
 		driftAmount;
 		driftSpeed;
 		selectedTextureIndex;
+		textures;
+		selectedMapIndex;
+		mapTextures;
 	}
 
 	const applyPreset = (preset: any) => {
@@ -186,11 +199,37 @@
 	const stateChanged = (event: CustomEvent) => {
 		state = event.detail.state;
 	};
+
+	async function getFile(alpha = true) {
+		// @ts-ignore
+		const [fileHandle] = await window.showOpenFilePicker({
+			types: [
+				{
+					description: 'Images',
+					accept: {
+						'image/*': ['.png', '.gif', '.jpeg', '.jpg']
+					}
+				}
+			],
+			excludeAcceptAllOption: true,
+			multiple: false
+		});
+		const file = await fileHandle.getFile();
+		if (!file) return;
+		if (alpha) {
+			imageUrls[4] = URL.createObjectURL(file);
+			let newTex = new TextureLoader().load(imageUrls[4]);
+			textures[4] = newTex;
+		} else {
+			mapUrls[1] = URL.createObjectURL(file);
+			mapTextures[1] = new TextureLoader().load(mapUrls[1]);
+		}
+	}
 </script>
 
 <Pane title="Particles" position="fixed">
 	<Checkbox bind:value={debug} label="debug" />
-	<Folder title="Main">
+	<Folder title="Main" expanded={false}>
 		<Text bind:value={state} label="state" disabled />
 		<Button
 			on:click={startParticles}
@@ -288,11 +327,32 @@
 		/>
 		<Checkbox bind:value={clampAlpha} label="clamp alpha" />
 		<Checkbox bind:value={additiveBlend} label="addative blend" />
+	</Folder>
+	<Folder title="Texture">
 		<List
-			bind:value={selectedTextureIndex}
-			label="alpha map"
-			options={{ 'circle texture': 0, 'smoke texture': 1, 'snowflake texture': 2 }}
+			bind:value={selectedMapIndex}
+			label="map"
+			options={{ 'no texture': 0, 'custom texture': 1 }}
 		/>
+		{#if selectedMapIndex === 1}
+			<Button on:click={() => getFile(false)} title="Load image" />
+			<Element>
+				<div
+					style:background-image={'url(' + mapUrls[selectedMapIndex] + ')'}
+					style="height:65px;width:65px;background-size: contain;background-repeat: no-repeat;margin-left:auto;background-color:black"
+				/>
+			</Element>
+		{/if}
+		<List bind:value={selectedTextureIndex} label="alpha map" options={imageOptions} />
+		{#if selectedTextureIndex === 4}<Button on:click={() => getFile()} title="Load image" />{/if}
+		{#if selectedTextureIndex !== 0}
+			<Element>
+				<div
+					style:background-image={'url(' + imageUrls[selectedTextureIndex] + ')'}
+					style="height:65px;width:65px;background-size: contain;background-repeat: no-repeat;margin-left:auto;background-color:black"
+				/>
+			</Element>
+		{/if}
 	</Folder>
 	<Folder title="Presets">
 		<Button on:click={() => applyPreset(presets['fountain'])} title="fountain" />
@@ -306,7 +366,7 @@
 </Pane>
 
 {#key reset}
-	{#await textures then t}
+	{#if texturesLoaded}
 		<Particles
 			rotation.y={r}
 			{clampAlpha}
@@ -332,14 +392,15 @@
 			{additiveBlend}
 			{size}
 			{rotationRandom}
-			alphaMap={t[selectedTextureIndex]}
+			alphaMap={textures[selectedTextureIndex]}
+			map={mapTextures[selectedMapIndex]}
 			{driftAmount}
 			{driftSpeed}
 			bind:start
 			bind:stop
 			on:stateChanged={stateChanged}
 		/>
-	{/await}
+	{/if}
 {/key}
 
 {#if debug}
