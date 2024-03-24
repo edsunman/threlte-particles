@@ -328,7 +328,7 @@
 		<Checkbox bind:value={clampAlpha} label="clamp alpha" />
 		<Checkbox bind:value={additiveBlend} label="addative blend" />
 	</Folder>
-	<Folder title="Texture">
+	<Folder title="Texture" expanded={false}>
 		<List
 			bind:value={selectedMapIndex}
 			label="map"
@@ -429,26 +429,3 @@
 	sectionThickness={0}
 	fadeDistance={50}
 />
-<!--
-<ContactShadows scale={10} blur={2} far={2.5} opacity={0.5} />
-
-<Float floatIntensity={1} floatingRange={[0, 1]}>
-	<T.Mesh position.y={0.2} position.z={-5.75}>
-		<T.BoxGeometry />
-		<T.MeshStandardMaterial color="#0059BA" />
-	</T.Mesh>
-</Float>
-
-<Float floatIntensity={1} floatingRange={[0, 1]}>
-	<T.Mesh position={[5.2, 0.5, 0.75]} rotation.x={5} rotation.y={71}>
-		<T.TorusKnotGeometry args={[0.5, 0.15, 100, 12, 2, 3]} />
-		<T.MeshStandardMaterial color="#F85122" />
-	</T.Mesh>
-</Float>
-
-<Float floatIntensity={1} floatingRange={[0, 1]}>
-	<T.Mesh position={[-5.4, 1.5, 2.75]} rotation={[-5, 128, 10]}>
-		<T.IcosahedronGeometry />
-		<T.MeshStandardMaterial color="#F8EBCE" />
-	</T.Mesh>
-</Float>-->
