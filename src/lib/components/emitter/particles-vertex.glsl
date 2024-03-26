@@ -105,7 +105,7 @@ void main() {
     float noiseAmountX = snoise(vec3(newPosition.x + vNormalLife * driftSpeed * randomSeed, randomSeed, randomSeed)) * driftAmount;
     float noiseAmountY = snoise(vec3(randomSeed, newPosition.y + vNormalLife * driftSpeed * randomSeed, randomSeed)) * driftAmount;
     float noiseAmountZ = snoise(vec3(randomSeed, randomSeed, newPosition.z + vNormalLife * driftSpeed * randomSeed)) * driftAmount;
-    newPosition = vec3(newPosition.x + noiseAmountX, newPosition.y + noiseAmountY, newPosition.z + noiseAmountZ);
+    newPosition = vec3(newPosition.x + (noiseAmountX * vNormalLife), newPosition.y + (noiseAmountY * vNormalLife), newPosition.z + (noiseAmountZ * vNormalLife));
 
     // velocity
     newPosition = newPosition + (velocity * dampenedLife);

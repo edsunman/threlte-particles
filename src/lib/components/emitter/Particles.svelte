@@ -7,8 +7,10 @@
 		ShaderMaterial,
 		NormalBlending,
 		AdditiveBlending,
-		type Texture
+		type Texture,
+		Mesh
 	} from 'three';
+	import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 	import { createEventDispatcher } from 'svelte';
 	import {
 		ramdomPointInsideCube,
@@ -80,12 +82,15 @@
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
 	let emitterLife = 0;
 	let state = '';
-	let newPosition;
+	let newPosition: { x: number; y: number; z: number };
 	let paused = false;
 	let pausedTime: number;
 	let useAlphaMap = alphaMap ? 1 : 0;
 	let useMap = map ? 1 : 0;
 	let material: ShaderMaterial;
+	let emitterMesh: Mesh;
+	let useCustomGeometry = false;
+	let sampler: any;
 
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();
@@ -96,6 +101,7 @@
 	const dispatch = createEventDispatcher();
 	const geometry = new BufferGeometry();
 	const particles: any = [];
+	const samplerVector = new Vector3();
 
 	export const start = () => {
 		if (state !== 'finished') {
@@ -122,7 +128,6 @@
 	const setupParticles = () => {
 		if (map) map.flipY = false;
 		if (alphaMap) alphaMap.flipY = false;
-		console.log(map?.colorSpace);
 		for (let i = 0; i < count; i++) {
 			const pDirection = new Vector3().copy(directionVector.normalize());
 			if (spread > 0) pDirection.copy(randomDirectionSpread(pDirection, spread / 2));
@@ -197,7 +202,14 @@
 	};
 
 	const positionNewParticle = (index: number) => {
-		if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z) {
+		if (useCustomGeometry) {
+			sampler.sample(samplerVector);
+			emitterMesh.updateMatrix();
+			samplerVector.applyMatrix4(emitterMesh.matrix);
+			positionAttributeArray[index * 3] = samplerVector.x;
+			positionAttributeArray[index * 3 + 1] = samplerVector.y;
+			positionAttributeArray[index * 3 + 2] = samplerVector.z;
+		} else if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z) {
 			newPosition = ramdomPointInsideCube(position, emitterScale);
 			positionAttributeArray[index * 3] = newPosition.x;
 			positionAttributeArray[index * 3 + 1] = newPosition.y;
@@ -288,9 +300,18 @@
 			geometry.setAttribute('position', new Float32BufferAttribute(positionAttributeArray, 3));
 		}
 	});
+
+	const geometryLoaded = (d: Mesh) => {
+		if (!d || d.geometry.name === 'defaultBox' || !('position' in d.geometry.attributes)) return;
+		useCustomGeometry = true;
+		d.geometry = d.geometry.toNonIndexed();
+		sampler = new MeshSurfaceSampler(d).build();
+	};
+
+	$: geometryLoaded(emitterMesh);
 </script>
 
-<T.Points {geometry} {...$$restProps}>
+<T.Points {geometry} {...$$restProps} name="particles">
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
 		bind:ref={material}
@@ -355,13 +376,15 @@
 		}}
 	/>
 </T.Points>
-<!-- TODO: this box is not in the correct place when the emitter position is not 0,0,0 -->
+
 <T.Mesh
-	let:ref
+	bind:ref={emitterMesh}
 	scale={[emitterScale.x, emitterScale.y, emitterScale.z]}
 	position={[position.x, position.y, position.z]}
+	name="emitterDebugMesh"
 >
-	<T.BoxGeometry />
+	<slot>
+		<T.BoxGeometry name="defaultBox" />
+	</slot>
 	<T.MeshBasicMaterial wireframe visible={debug} />
-	<slot {ref} />
 </T.Mesh>

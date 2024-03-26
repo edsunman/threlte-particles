@@ -17,7 +17,7 @@
 		Element
 	} from 'svelte-tweakpane-ui';
 	import { presets } from './presets';
-	import { TextureLoader } from 'three';
+	import { MeshBasicMaterial, TextureLoader } from 'three';
 
 	/*
 	 *	Image Loading
@@ -49,6 +49,7 @@
 	let box: any;
 	let selectedTextureIndex = 1;
 	let selectedMapIndex = 0;
+	let selectedGeometryIndex = 0;
 	let emitterPosition = { x: 0, y: 0, z: 0 };
 	let state = '';
 	let reset = 0;
@@ -57,10 +58,10 @@
 	let count = 150;
 	let life = 3;
 	let oneShot = false;
-	let explosiveness = 0;
+	let explosiveness = 0.5;
 	let spread = 75;
 	let emitterScale = { x: 0, y: 0, z: 0 };
-	let velocity = 4;
+	let velocity = 5;
 	let velocityRandom = 0;
 	let dampen = true;
 	let color =
@@ -69,15 +70,15 @@
 	let lightnessRandom = 0.2;
 	let clampAlpha = false;
 	let additiveBlend = true;
-	let gravity = { x: 0, y: -1, z: 0 };
+	let gravity = { x: 0, y: -2, z: 0 };
 	let direction = { x: 0, y: 1, z: 0 };
 	let wind = { x: 0, y: 0, z: 0 };
-	let size = 'size(5) 0%, size(20) 100%';
+	let size = 'size(3) 0%, size(20) 100%';
 	let sizeRandom = 10;
 	let textureRotation = 0;
 	let rotationRandom = 0;
-	let driftAmount = 0;
-	let driftSpeed = 0;
+	let driftAmount = 0.3;
+	let driftSpeed = 0.3;
 	let r = 0;
 	let spinEmitter = false;
 
@@ -121,6 +122,7 @@
 		textures;
 		selectedMapIndex;
 		mapTextures;
+		selectedGeometryIndex;
 	}
 
 	const applyPreset = (preset: any) => {
@@ -151,6 +153,7 @@
 		selectedTextureIndex = preset.selectedTextureIndex;
 		spinEmitter = Object.hasOwn(preset, 'spinEmitter') ? true : false;
 		selectedMapIndex = 0;
+		Object.hasOwn(preset, 'geometry') ? (selectedGeometryIndex = 1) : (selectedGeometryIndex = 0);
 	};
 
 	const generateComponent = () => {
@@ -161,8 +164,9 @@
 	life={${life}}
 	explosiveness={${explosiveness}}
 	spread={${spread}}
+	gravity={{x:${gravity.x},y:${gravity.y},z:${gravity.z}}}
 	direction={{x:${direction.x},y:${direction.y},z:${direction.z}}}
-	direction={{x:${wind.x},y:${wind.y},z:${wind.z}}}
+	wind={{x:${wind.x},y:${wind.y},z:${wind.z}}}
 	driftSpeed={${driftSpeed}}
 	velocity={${velocity}}
 	velocityRandom={${velocityRandom}}
@@ -175,8 +179,8 @@
 	rotationRandom={${rotationRandom}}
 	dampen={${dampen}}
 	oneShot={${oneShot}}
-	clampAlpha={${driftAmount}}
-	additiveBlend={${driftAmount}}
+	clampAlpha={${clampAlpha}}
+	additiveBlend={${additiveBlend}}
 	{alphaMap}
 	{debug}
 />`);
@@ -243,8 +247,13 @@
 		<Point bind:value={emitterScale} label="emitter scale" min={0} max={10} />
 		<Separator />
 		<Checkbox bind:value={oneShot} label="one shot" />
-		<Slider bind:value={count} min={0} max={500} format={(v) => v.toFixed(0)} label="count" />
+		<Slider bind:value={count} min={0} max={1000} format={(v) => v.toFixed(0)} label="count" />
 		<Slider bind:value={life} min={0} max={10} format={(v) => v.toFixed(1)} label="life" />
+		<List
+			bind:value={selectedGeometryIndex}
+			label="custom geometry"
+			options={{ none: 0, 'ring geometry': 1 }}
+		/>
 	</Folder>
 	<Folder title="Movement" expanded={false}>
 		<Slider bind:value={velocity} min={0} max={20} format={(v) => v.toFixed(1)} label="velocity" />
@@ -359,6 +368,7 @@
 		<Button on:click={() => applyPreset(presets['fountain'])} title="fountain" />
 		<Button on:click={() => applyPreset(presets['snow'])} title="snow" />
 		<Button on:click={() => applyPreset(presets['fire'])} title="fire" />
+		<Button on:click={() => applyPreset(presets['portal'])} title="portal" />
 		<Button on:click={() => applyPreset(presets['tornado'])} title="tornado" />
 		<Button on:click={() => applyPreset(presets['fireflies'])} title="fireflies" />
 		<Separator />
@@ -368,39 +378,77 @@
 
 {#key reset}
 	{#if texturesLoaded}
-		<Particles
-			rotation.y={r}
-			{clampAlpha}
-			{debug}
-			{emitterPosition}
-			{textureRotation}
-			{emitterScale}
-			{count}
-			{life}
-			{oneShot}
-			{spread}
-			{velocity}
-			{velocityRandom}
-			{dampen}
-			{wind}
-			{gravity}
-			{direction}
-			{sizeRandom}
-			{explosiveness}
-			{colorRandom}
-			{lightnessRandom}
-			{color}
-			{additiveBlend}
-			{size}
-			{rotationRandom}
-			alphaMap={textures[selectedTextureIndex]}
-			map={mapTextures[selectedMapIndex]}
-			{driftAmount}
-			{driftSpeed}
-			bind:start
-			bind:stop
-			on:stateChanged={stateChanged}
-		/>
+		{#if selectedGeometryIndex === 0}
+			<Particles
+				rotation.y={r}
+				{clampAlpha}
+				{debug}
+				{emitterPosition}
+				{textureRotation}
+				{emitterScale}
+				{count}
+				{life}
+				{oneShot}
+				{spread}
+				{velocity}
+				{velocityRandom}
+				{dampen}
+				{wind}
+				{gravity}
+				{direction}
+				{sizeRandom}
+				{explosiveness}
+				{colorRandom}
+				{lightnessRandom}
+				{color}
+				{additiveBlend}
+				{size}
+				{rotationRandom}
+				alphaMap={textures[selectedTextureIndex]}
+				map={mapTextures[selectedMapIndex]}
+				{driftAmount}
+				{driftSpeed}
+				bind:start
+				bind:stop
+				on:stateChanged={stateChanged}
+			/>
+		{:else}
+			<Particles
+				rotation.y={r}
+				{clampAlpha}
+				{debug}
+				{emitterPosition}
+				{textureRotation}
+				{emitterScale}
+				{count}
+				{life}
+				{oneShot}
+				{spread}
+				{velocity}
+				{velocityRandom}
+				{dampen}
+				{wind}
+				{gravity}
+				{direction}
+				{sizeRandom}
+				{explosiveness}
+				{colorRandom}
+				{lightnessRandom}
+				{color}
+				{additiveBlend}
+				{size}
+				{rotationRandom}
+				alphaMap={textures[selectedTextureIndex]}
+				map={mapTextures[selectedMapIndex]}
+				{driftAmount}
+				{driftSpeed}
+				bind:start
+				bind:stop
+				on:stateChanged={stateChanged}
+			>
+				<T.RingGeometry args={[1.9, 2]} />
+			</Particles>
+		{/if}
 	{/if}
 {/key}
 
