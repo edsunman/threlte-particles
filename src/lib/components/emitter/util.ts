@@ -89,7 +89,7 @@ export const randomDirectionSpread = (direction: Vector3, angleDegrees: number) 
 	return new Vector3(x, y, z).applyQuaternion(q);
 };
 
-export const ramdomPointInsideCube = (
+export const randomPointInsideCube = (
 	position: Vector3,
 	scale: { x: number; y: number; z: number }
 ) => {

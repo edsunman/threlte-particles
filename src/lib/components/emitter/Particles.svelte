@@ -13,18 +13,21 @@
 	import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 	import { createEventDispatcher } from 'svelte';
 	import {
-		ramdomPointInsideCube,
+		randomPointInsideCube,
 		randomDirectionSpread,
 		createGradientObject,
 		randomNumber
 	} from './util';
 	import fragmentShader from './particles-fragment.glsl?raw';
 	import vertexShader from './particles-vertex.glsl?raw';
+	type Particle = { life: number };
 
 	/** Position of the emitter. You can update while the emitter is running. */
 	export let emitterPosition = { x: 0, y: 0, z: 0 };
 	/** Scale of the emitter. You can update while the emitter is running. */
 	export let emitterScale = { x: 0, y: 0, z: 0 };
+	/** Rotation of the emitter. You can update while the emitter is running. */
+	export let emitterRotation = { x: 0, y: 0, z: 0 };
 	/** The number of particles. */
 	export let count = 5;
 	/** The life of each particle in seconds. */
@@ -90,17 +93,23 @@
 	let material: ShaderMaterial;
 	let emitterMesh: Mesh;
 	let useCustomGeometry = false;
-	let sampler: any;
+	let sampler: MeshSurfaceSampler;
 
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();
-	const positionAttributeArray: number[] = [];
-	const lifeAttributeArray: number[] = [];
+	const positionAttribute = new Float32BufferAttribute(count * 3, 3);
+	const lifeAttribute = new Float32BufferAttribute(count, 1);
+	const sizeAttribute = new Float32BufferAttribute(count, 1);
+	const colorAttribute = new Float32BufferAttribute(count, 1);
+	const lightnessAttribute = new Float32BufferAttribute(count, 1);
+	const rotationAttribute = new Float32BufferAttribute(count, 1);
+	const velocitiesAttribute = new Float32BufferAttribute(count * 3, 3);
+	const randomAttribute = new Float32BufferAttribute(count, 1);
 	const parsedColorGradient = createGradientObject(color, 16);
 	const parsedSizeGradient = createGradientObject(size, 4);
 	const dispatch = createEventDispatcher();
 	const geometry = new BufferGeometry();
-	const particles: any = [];
+	const particles: Particle[] = [];
 	const samplerVector = new Vector3();
 
 	export const start = () => {
@@ -125,78 +134,58 @@
 		pausedTime = emitterLife;
 	};
 
-	const setupParticles = () => {
-		if (map) map.flipY = false;
-		if (alphaMap) alphaMap.flipY = false;
-		for (let i = 0; i < count; i++) {
-			const pDirection = new Vector3().copy(directionVector.normalize());
-			if (spread > 0) pDirection.copy(randomDirectionSpread(pDirection, spread / 2));
-			const pVelocity =
-				velocityRandom > 0
-					? randomNumber(velocity - velocityRandom / 2, velocity + velocityRandom / 2)
-					: velocity;
-			let pSize = sizeRandom > 0 ? randomNumber(-sizeRandom / 2, sizeRandom / 2) : 0;
-			pSize = pSize < 0 ? 0 : pSize;
-			const pColor = colorRandom > 0 ? randomNumber(-colorRandom / 2, colorRandom / 2) : 0;
-			const pLightness =
-				lightnessRandom > 0 ? randomNumber(-lightnessRandom / 2, lightnessRandom / 2) : 0;
-			const pRotation =
-				rotationRandom > 0
-					? randomNumber(textureRotation - rotationRandom / 2, textureRotation + rotationRandom / 2)
-					: textureRotation;
-			pDirection.multiplyScalar(pVelocity);
-			const pRandomSeed = Math.random();
-			particles.push({
-				position: { x: 0, y: 0, z: 0 },
-				sizeRandom: pSize,
-				colorRandom: pColor,
-				lightnessRandom: pLightness,
-				life: -(life / count) * i * (1 - explosiveness),
-				maxLife: life,
-				rotation: pRotation,
-				velocity: pDirection,
-				randomSeed: pRandomSeed
-			});
-		}
-
-		const sizes = [];
-		const colors: any = [];
-		const lightness: any = [];
-		const rotations: any = [];
-		const velocities: any = [];
-		const randomSeeds: any = [];
-		for (let particle of particles) {
-			positionAttributeArray.push(particle.position.x, particle.position.y, particle.position.z);
-			sizes.push(particle.sizeRandom);
-			colors.push(particle.colorRandom);
-			lightness.push(particle.lightnessRandom);
-			rotations.push(particle.rotation);
-			lifeAttributeArray.push(particle.life);
-			velocities.push(particle.velocity.x, particle.velocity.y, particle.velocity.z);
-			randomSeeds.push(particle.randomSeed);
-		}
-		geometry.setAttribute('position', new Float32BufferAttribute(positionAttributeArray, 3));
-		geometry.setAttribute('sizeRandom', new Float32BufferAttribute(sizes, 1));
-		geometry.setAttribute('colorRandom', new Float32BufferAttribute(colors, 1));
-		geometry.setAttribute('lightnessRandom', new Float32BufferAttribute(lightness, 1));
-		geometry.setAttribute('rotation', new Float32BufferAttribute(rotations, 1));
-		geometry.setAttribute('life', new Float32BufferAttribute(lifeAttributeArray, 1));
-		geometry.setAttribute('velocity', new Float32BufferAttribute(velocities, 3));
-		geometry.setAttribute('randomSeed', new Float32BufferAttribute(randomSeeds, 1));
-
-		geometry.attributes.sizeRandom.needsUpdate = true;
-		geometry.attributes.velocity.needsUpdate = true;
-		geometry.attributes.colorRandom.needsUpdate = true;
-		geometry.attributes.lightnessRandom.needsUpdate = true;
-		geometry.attributes.rotation.needsUpdate = true;
-		geometry.attributes.life.needsUpdate = true;
-		geometry.attributes.randomSeed.needsUpdate = true;
+	const stateChanged = () => {
+		dispatch('stateChanged', {
+			state
+		});
 	};
 
-	setupParticles();
+	if (map) map.flipY = false;
+	if (alphaMap) alphaMap.flipY = false;
+
+	for (let i = 0; i < count; i++) {
+		// direction and velocity
+		const pDirection = new Vector3().copy(directionVector.normalize());
+		if (spread > 0) pDirection.copy(randomDirectionSpread(pDirection, spread / 2));
+		const pVelocity =
+			velocityRandom > 0
+				? randomNumber(velocity - velocityRandom / 2, velocity + velocityRandom / 2)
+				: velocity;
+		pDirection.multiplyScalar(pVelocity);
+		velocitiesAttribute.setXYZ(i, pDirection.x, pDirection.y, pDirection.z);
+
+		// size, color, lightness
+		let pSize = sizeRandom > 0 ? randomNumber(-sizeRandom / 2, sizeRandom / 2) : 0;
+		sizeAttribute.setX(i, pSize < 0 ? 0 : pSize);
+		colorAttribute.setX(i, colorRandom > 0 ? randomNumber(-colorRandom / 2, colorRandom / 2) : 0);
+		lightnessAttribute.setX(
+			i,
+			lightnessRandom > 0 ? randomNumber(-lightnessRandom / 2, lightnessRandom / 2) : 0
+		);
+		rotationAttribute.setX(
+			i,
+			rotationRandom > 0
+				? randomNumber(textureRotation - rotationRandom / 2, textureRotation + rotationRandom / 2)
+				: textureRotation
+		);
+		randomAttribute.setX(i, Math.random());
+
+		// life
+		const pLife = -(life / count) * i * (1 - explosiveness);
+		particles.push({ life: pLife });
+		lifeAttribute.setX(i, pLife);
+	}
+	geometry.setAttribute('position', positionAttribute);
+	geometry.setAttribute('life', lifeAttribute);
+	geometry.setAttribute('sizeRandom', sizeAttribute);
+	geometry.setAttribute('colorRandom', colorAttribute);
+	geometry.setAttribute('lightnessRandom', lightnessAttribute);
+	geometry.setAttribute('rotation', rotationAttribute);
+	geometry.setAttribute('velocity', velocitiesAttribute);
+	geometry.setAttribute('randomSeed', randomAttribute);
 
 	const distributePreBirthParticles = () => {
-		particles.forEach((particle: any, i: number) => {
+		particles.forEach((particle: Particle, i: number) => {
 			particle.life = -(life / count) * i * (1 - explosiveness);
 		});
 	};
@@ -206,40 +195,35 @@
 			sampler.sample(samplerVector);
 			emitterMesh.updateMatrix();
 			samplerVector.applyMatrix4(emitterMesh.matrix);
-			positionAttributeArray[index * 3] = samplerVector.x;
-			positionAttributeArray[index * 3 + 1] = samplerVector.y;
-			positionAttributeArray[index * 3 + 2] = samplerVector.z;
-		} else if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z) {
-			newPosition = ramdomPointInsideCube(position, emitterScale);
-			positionAttributeArray[index * 3] = newPosition.x;
-			positionAttributeArray[index * 3 + 1] = newPosition.y;
-			positionAttributeArray[index * 3 + 2] = newPosition.z;
+			positionAttribute.setXYZ(index, samplerVector.x, samplerVector.y, samplerVector.z);
+		} else if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z > 0) {
+			newPosition = randomPointInsideCube(position, emitterScale);
+			positionAttribute.setXYZ(index, newPosition.x, newPosition.y, newPosition.z);
 		} else {
-			positionAttributeArray[index * 3] = position.x;
-			positionAttributeArray[index * 3 + 1] = position.y;
-			positionAttributeArray[index * 3 + 2] = position.z;
+			positionAttribute.setXYZ(index, position.x, position.y, position.z);
 		}
 	};
 
-	const stateChanged = () => {
-		dispatch('stateChanged', {
-			state
-		});
-	};
-
-	const positionUpdated = (p: any) => {
-		position.x = p.x;
-		position.y = p.y;
-		position.z = p.z;
+	const positionUpdated = (p: { x: number; y: number; z: number }) => {
+		position.set(p.x, p.y, p.z);
 		if (!geometry.boundingSphere) {
 			geometry.computeBoundingSphere();
+			return;
 		}
-		if (!geometry.boundingSphere) return;
 		geometry.boundingSphere.radius = boundingSphereRadius;
 		geometry.boundingSphere.center = position;
 	};
 
 	$: positionUpdated(emitterPosition);
+
+	const geometryLoaded = (d: Mesh) => {
+		if (!d || d.geometry.name === 'defaultBox' || !('position' in d.geometry.attributes)) return;
+		useCustomGeometry = true;
+		d.geometry = d.geometry.toNonIndexed();
+		sampler = new MeshSurfaceSampler(d).build();
+	};
+
+	$: geometryLoaded(emitterMesh);
 
 	useTask((delta) => {
 		emitterLife += delta;
@@ -275,7 +259,7 @@
 
 		if (state === 'starting') {
 			// move unborn particles to emitter position
-			particles.forEach((particle: any, index: number) => {
+			particles.forEach((particle: Particle, index: number) => {
 				if (particle.life <= 0) {
 					positionNewParticle(index);
 				}
@@ -283,32 +267,21 @@
 		}
 		if (state !== 'finished') {
 			// update particles
-			lifeAttributeArray.length = 0;
-			particles.forEach((particle: any, index: number) => {
+			particles.forEach((particle: Particle, index: number) => {
 				particle.life += delta;
-				if (particle.life > particle.maxLife) {
+				if (particle.life > life) {
 					// particle died
 					if (state === 'running' && !paused) {
 						particle.life = 0;
 						positionNewParticle(index);
 					}
 				}
-				lifeAttributeArray.push(particle.life);
+				lifeAttribute.setX(index, particle.life);
 			});
-			const lifeAttribute = (geometry.getAttribute('life') as any).set(lifeAttributeArray);
 			lifeAttribute.needsUpdate = true;
-			geometry.setAttribute('position', new Float32BufferAttribute(positionAttributeArray, 3));
+			positionAttribute.needsUpdate = true;
 		}
 	});
-
-	const geometryLoaded = (d: Mesh) => {
-		if (!d || d.geometry.name === 'defaultBox' || !('position' in d.geometry.attributes)) return;
-		useCustomGeometry = true;
-		d.geometry = d.geometry.toNonIndexed();
-		sampler = new MeshSurfaceSampler(d).build();
-	};
-
-	$: geometryLoaded(emitterMesh);
 </script>
 
 <T.Points {geometry} {...$$restProps} name="particles">
@@ -381,6 +354,7 @@
 	bind:ref={emitterMesh}
 	scale={[emitterScale.x, emitterScale.y, emitterScale.z]}
 	position={[position.x, position.y, position.z]}
+	rotation={[emitterRotation.x, emitterRotation.y, emitterRotation.z]}
 	name="emitterDebugMesh"
 >
 	<slot>
