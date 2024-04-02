@@ -205,7 +205,9 @@
 	};
 
 	const positionUpdated = (p: { x: number; y: number; z: number }) => {
-		position.set(p.x, p.y, p.z);
+		position.x = p.x;
+		position.y = p.y;
+		position.z = p.z;
 		if (!geometry.boundingSphere) {
 			geometry.computeBoundingSphere();
 			return;
