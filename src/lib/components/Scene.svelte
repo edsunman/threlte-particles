@@ -18,6 +18,7 @@
 	} from 'svelte-tweakpane-ui';
 	import { presets } from './presets';
 	import { MeshBasicMaterial, TextureLoader } from 'three';
+	import Peformance from './Peformance.svelte';
 
 	/*
 	 *	Image Loading
@@ -232,6 +233,7 @@
 	}
 </script>
 
+<Peformance />
 <Pane title="Particles" position="fixed">
 	<Checkbox bind:value={debug} label="debug" />
 	<Folder title="Main" expanded={false}>

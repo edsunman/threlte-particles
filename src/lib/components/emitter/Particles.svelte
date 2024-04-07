@@ -204,16 +204,20 @@
 		}
 	};
 
+	const computeBounding = () => {
+		if (!geometry.boundingSphere) geometry.computeBoundingSphere();
+		if (!geometry.boundingSphere) return;
+		geometry.boundingSphere.radius = boundingSphereRadius;
+		geometry.boundingSphere.center = position;
+	};
+
+	computeBounding();
+
 	const positionUpdated = (p: { x: number; y: number; z: number }) => {
 		position.x = p.x;
 		position.y = p.y;
 		position.z = p.z;
-		if (!geometry.boundingSphere) {
-			geometry.computeBoundingSphere();
-			return;
-		}
-		geometry.boundingSphere.radius = boundingSphereRadius;
-		geometry.boundingSphere.center = position;
+		computeBounding();
 	};
 
 	$: positionUpdated(emitterPosition);
