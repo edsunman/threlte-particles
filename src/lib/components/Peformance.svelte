@@ -4,12 +4,10 @@
 
 	const { mainStage, renderStage, renderer } = useThrelte();
 
-	let now = 0;
 	let then = 0;
-	let ms = 0;
+	let now = 0;
 	let peak = 0;
 	let lastPeak = 0;
-	let d = 0;
 	let deltaPeak = 0;
 	let lastDeltaPeak = 0;
 	let gpu = 0;
@@ -17,6 +15,8 @@
 	let lastGpuPeak = 0;
 	let clock = 0;
 	let intervalCounter = 0;
+	let ms = 0;
+	let d = 0;
 
 	const gl = renderer.getContext();
 	const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
@@ -104,7 +104,7 @@
 		'color:#fff;font-family:Roboto Mono, Source Code Pro, Menlo, Courier, monospace;font-size:11px;' +
 		'position:absolute;z-index:100;background:hsl(230, 7%, 17%);margin:8px;padding:0 15px 12px;border-radius: 10px;';
 	const deltaNumbersDiv = createFlexDiv('delta', mainDiv, dCanvas);
-	const jsNumbersDiv = createFlexDiv('js', mainDiv, tCanvas);
+	const threlteNumbersDiv = createFlexDiv('js', mainDiv, tCanvas);
 	const gpuNumbersDiv = createFlexDiv('gpu', mainDiv, gCanvas);
 	document.body.prepend(mainDiv);
 
@@ -116,7 +116,7 @@
 			'</span>';
 	}
 	$: {
-		jsNumbersDiv.innerHTML =
+		threlteNumbersDiv.innerHTML =
 			ms.toFixed(1) + '<span style="color:rgba(187, 188, 196, 0.7)"> : ' + lastPeak.toFixed(1);
 		+'</span>';
 	}
@@ -129,6 +129,7 @@
 	useTask(
 		() => {
 			then = window.performance.now();
+			measureGpu();
 		},
 		{
 			stage: useStage('monitor-begin', {
@@ -161,7 +162,7 @@
 			if (tContext) updateGraph(tContext, tCanvas, ms, 25);
 			if (gContext) updateGraph(gContext, gCanvas, gpu, 25);
 
-			measureGpu();
+			endGpu();
 		},
 		{
 			stage: useStage('monitor-end', {
