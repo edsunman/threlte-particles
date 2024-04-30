@@ -409,7 +409,7 @@
 				bind:start
 				bind:stop
 				emitterStateChanged={(e: string) => (eState = e)}
-				customGeometry={selectedGeometryIndex === 0 ? null : ringGeometry}
+				customGeometry={selectedGeometryIndex === 0 ? undefined : ringGeometry}
 			/>
 	{/if}
 {/key}

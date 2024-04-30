@@ -90,7 +90,7 @@ export const randomDirectionSpread = (direction: Vector3, angleDegrees: number) 
 };
 
 export const randomPointInsideCube = (
-	position: Vector3,
+	position: { x: number; y: number; z: number },
 	scale: { x: number; y: number; z: number }
 ) => {
 	return {

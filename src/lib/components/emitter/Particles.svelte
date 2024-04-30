@@ -7,8 +7,9 @@
 		ShaderMaterial,
 		NormalBlending,
 		AdditiveBlending,
-		type Texture,
-		Mesh
+		Mesh,
+		Points
+
 	} from 'three';
 	import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
 	import {
@@ -19,6 +20,10 @@
 	} from './util';
 	import fragmentShader from './particles-fragment.glsl?raw';
 	import vertexShader from './particles-vertex.glsl?raw';
+	import type { ParticlesEvents, ParticlesProps, ParticlesSlots } from './Particles.svelte'
+	
+	type $$Events = ParticlesEvents;
+	type $$Slots = ParticlesSlots;
 	type Particle = { life: number };
 
 	let {
@@ -55,8 +60,9 @@
 		stop = $bindable(),
 		emitterStateChanged = (e: string): void => {},
 		customGeometry,
-		...restProps
-	}: any = $props();
+		ref = $bindable(),
+		...props
+	}: ParticlesProps = $props();
 	
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
 	let emitterLife = 0;
@@ -71,6 +77,7 @@
 	let sampler: MeshSurfaceSampler;
 	let newState = '';
 
+	const points = new Points();
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();
 	const positionAttribute = new Float32BufferAttribute(count * 3, 3);
@@ -186,7 +193,7 @@
 		if (!geometry.boundingSphere) geometry.computeBoundingSphere();
 		if (!geometry.boundingSphere) return;
 		geometry.boundingSphere.radius = boundingSphereRadius;
-		geometry.boundingSphere.center = emitterPosition;
+		geometry.boundingSphere.center.set(emitterPosition.x,emitterPosition.y,emitterPosition.z);
 	};
 
 	$effect.pre(() => {
@@ -264,7 +271,7 @@
 	});
 </script>
 
-<T.Points {geometry} name="particles" {...restProps}>
+<T.Points bind:ref {geometry} name="particles" {...props}>
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
 		bind:ref={material}
