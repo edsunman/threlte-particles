@@ -54,7 +54,8 @@
 		start = $bindable(),
 		stop = $bindable(),
 		emitterStateChanged = (e: string): void => {},
-		customGeometry
+		customGeometry,
+		...restProps
 	}: any = $props();
 	
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
@@ -263,7 +264,7 @@
 	});
 </script>
 
-<T.Points {geometry} name="particles">
+<T.Points {geometry} name="particles" {...restProps}>
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
 		bind:ref={material}
