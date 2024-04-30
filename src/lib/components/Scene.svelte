@@ -23,10 +23,10 @@
 	/*
 	 *	Image Loading
 	 */
-	const imageUrls = ['', '/circle.png', '/smoke.png', '/snowflake.png', ''];
-	const mapUrls = ['', ''];
-	let texturesLoaded = false;
-	let textures: any;
+	const imageUrls = $state(['', '/circle.png', '/smoke.png', '/snowflake.png', '']);
+	const mapUrls =  $state(['', '']);
+	let texturesLoaded = $state(false);
+	let textures: any = $state();
 	let mapTextures: any = [false, false];
 	const texturesPromise = Promise.all([
 		useTexture('/circle.png'),
@@ -45,57 +45,50 @@
 		'custom texture': 4
 	};
 
-	let start: any;
-	let stop: any;
-	let box: any;
-	let selectedTextureIndex = 1;
-	let selectedMapIndex = 0;
-	let selectedGeometryIndex = 0;
-	let emitterPosition = { x: 0, y: 0, z: 0 };
-	let state = '';
-	let reset = 0;
+	let start: any = $state();
+	let stop: any = $state();
+	let box: any = $state();
+	let selectedTextureIndex = $state(1);
+	let selectedMapIndex = $state(0);
+	let selectedGeometryIndex = $state(0);
+	let emitterPosition = $state({ x: 0, y: 0, z: 0 });
+	let eState = $state('');
+	let reset = $state(0);
 
-	let debug = false;
-	let count = 150;
-	let life = 3;
-	let oneShot = false;
-	let explosiveness = 0.5;
-	let spread = 75;
-	let emitterScale = { x: 0, y: 0, z: 0 };
-	let velocity = 5;
-	let velocityRandom = 0;
-	let dampen = true;
-	let color =
-		'rgba(255,0,255,0) 0%, rgba(255,0,255,1) 15%, rgba(255,0,255,1) 50%,rgba(255,0,255,0) 100%';
-	let colorRandom = 0.12;
-	let lightnessRandom = 0.2;
-	let clampAlpha = false;
-	let additiveBlend = true;
-	let gravity = { x: 0, y: -2, z: 0 };
-	let direction = { x: 0, y: 1, z: 0 };
-	let wind = { x: 0, y: 0, z: 0 };
-	let size = 'size(3) 0%, size(20) 100%';
-	let sizeRandom = 10;
-	let textureRotation = 0;
-	let rotationRandom = 0;
-	let driftAmount = 0.3;
-	let driftSpeed = 0.3;
-	let r = 0;
-	let spinEmitter = false;
-
-	const startParticles = () => {
-		start();
-	};
-
-	const stopParticles = () => {
-		stop();
-	};
+	let debug = $state(false);
+	let count = $state(150);
+	let life = $state(3);
+	let oneShot = $state(false);
+	let explosiveness = $state(0.5);
+	let spread = $state(75);
+	let emitterScale = $state({ x: 0, y: 0, z: 0 });
+	let velocity = $state(5);
+	let velocityRandom = $state(0);
+	let dampen = $state(true);
+	let color = $state(
+		'rgba(255,0,255,0) 0%, rgba(255,0,255,1) 15%, rgba(255,0,255,1) 50%,rgba(255,0,255,0) 100%'
+	);
+	let colorRandom = $state(0.12);
+	let lightnessRandom = $state(0.2);
+	let clampAlpha = $state(false);
+	let additiveBlend = $state(true);
+	let gravity = $state({ x: 0, y: -2, z: 0 });
+	let direction = $state({ x: 0, y: 1, z: 0 });
+	let wind = $state({ x: 0, y: 0, z: 0 });
+	let size = $state('size(3) 0%, size(20) 100%');
+	let sizeRandom = $state(10);
+	let textureRotation = $state(0);
+	let rotationRandom = $state(0);
+	let driftAmount = $state(0.3);
+	let driftSpeed = $state(0.3);
+	let r = $state(0);
+	let spinEmitter = $state(false);
 
 	const resetEmitter = () => {
 		reset = Math.random();
 	};
 
-	$: {
+	$effect.pre(() => {
 		resetEmitter();
 		life;
 		oneShot;
@@ -110,9 +103,9 @@
 		lightnessRandom;
 		clampAlpha;
 		additiveBlend;
-		gravity;
-		direction;
-		wind;
+		gravity.x,gravity.y,gravity.z;
+		direction.x,direction.y,direction.z;
+		wind.x,wind.y,wind.z;
 		size;
 		sizeRandom;
 		textureRotation;
@@ -124,7 +117,7 @@
 		selectedMapIndex;
 		mapTextures;
 		selectedGeometryIndex;
-	}
+	});
 
 	const applyPreset = (preset: any) => {
 		emitterPosition = preset.emitterPosition;
@@ -183,7 +176,6 @@
 	clampAlpha={${clampAlpha}}
 	additiveBlend={${additiveBlend}}
 	{alphaMap}
-	{debug}
 />`);
 
 		alert('Copied to clipboard');
@@ -201,10 +193,6 @@
 			emitterPosition.z = box.position.z;
 		}
 	});
-
-	const stateChanged = (event: CustomEvent) => {
-		state = event.detail.state;
-	};
 
 	async function getFile(alpha = true) {
 		// @ts-ignore
@@ -226,26 +214,29 @@
 			imageUrls[4] = URL.createObjectURL(file);
 			let newTex = new TextureLoader().load(imageUrls[4]);
 			textures[4] = newTex;
+			resetEmitter();
 		} else {
 			mapUrls[1] = URL.createObjectURL(file);
 			mapTextures[1] = new TextureLoader().load(mapUrls[1]);
+			resetEmitter();
 		}
 	}
 </script>
 
 <Peformance />
+
 <Pane title="Particles" position="fixed">
 	<Checkbox bind:value={debug} label="debug" />
 	<Folder title="Main" expanded={false}>
-		<Text bind:value={state} label="state" disabled />
+		<Text bind:value={eState} label="state" disabled />
 		<Button
-			on:click={startParticles}
+			on:click={() => start()}
 			title="start"
-			disabled={state !== 'finished' ? true : false}
+			disabled={eState !== 'finished' ? true : false}
 		/>
-		<Button on:click={stopParticles} title="stop" disabled={state !== 'running' ? true : false} />
+		<Button on:click={() => stop()} title="stop" disabled={eState !== 'running' ? true : false} />
 		<Separator />
-		<Point value={emitterPosition} label="emitter position" min={-10} max={10} />
+		<Point bind:value={emitterPosition} label="emitter position" min={-10} max={10} />
 		<Point bind:value={emitterScale} label="emitter scale" min={0} max={10} />
 		<Separator />
 		<Checkbox bind:value={oneShot} label="one shot" />
@@ -255,7 +246,7 @@
 			bind:value={selectedGeometryIndex}
 			label="custom geometry"
 			options={{ none: 0, 'ring geometry': 1 }}
-		/>
+		/> 
 	</Folder>
 	<Folder title="Movement" expanded={false}>
 		<Slider bind:value={velocity} min={0} max={20} format={(v) => v.toFixed(1)} label="velocity" />
@@ -299,7 +290,7 @@
 			label="drift speed"
 		/>
 	</Folder>
-	<Folder title="Apperance" expanded={false}>
+		<Folder title="Apperance" expanded={false}>
 		<Textarea bind:value={color} label="color" rows={4} />
 		<Slider
 			bind:value={colorRandom}
@@ -349,6 +340,7 @@
 		{#if selectedMapIndex === 1}
 			<Button on:click={() => getFile(false)} title="Load image" />
 			<Element>
+				<!-- svelte-ignore element_invalid_self_closing_tag -->
 				<div
 					style:background-image={'url(' + mapUrls[selectedMapIndex] + ')'}
 					style="height:65px;width:65px;background-size: contain;background-repeat: no-repeat;margin-left:auto;background-color:black"
@@ -359,6 +351,7 @@
 		{#if selectedTextureIndex === 4}<Button on:click={() => getFile()} title="Load image" />{/if}
 		{#if selectedTextureIndex !== 0}
 			<Element>
+				<!-- svelte-ignore element_invalid_self_closing_tag -->
 				<div
 					style:background-image={'url(' + imageUrls[selectedTextureIndex] + ')'}
 					style="height:65px;width:65px;background-size: contain;background-repeat: no-repeat;margin-left:auto;background-color:black"
@@ -378,9 +371,12 @@
 	</Folder>
 </Pane>
 
+{#snippet ringGeometry()}
+	<T.RingGeometry args={[1.9, 2]} />
+{/snippet}
+
 {#key reset}
 	{#if texturesLoaded}
-		{#if selectedGeometryIndex === 0}
 			<Particles
 				rotation.y={r}
 				{clampAlpha}
@@ -412,45 +408,9 @@
 				{driftSpeed}
 				bind:start
 				bind:stop
-				on:stateChanged={stateChanged}
+				emitterStateChanged={(e: string) => (eState = e)}
+				customGeometry={selectedGeometryIndex === 0 ? null : ringGeometry}
 			/>
-		{:else}
-			<Particles
-				rotation.y={r}
-				{clampAlpha}
-				{debug}
-				{emitterPosition}
-				{textureRotation}
-				{emitterScale}
-				{count}
-				{life}
-				{oneShot}
-				{spread}
-				{velocity}
-				{velocityRandom}
-				{dampen}
-				{wind}
-				{gravity}
-				{direction}
-				{sizeRandom}
-				{explosiveness}
-				{colorRandom}
-				{lightnessRandom}
-				{color}
-				{additiveBlend}
-				{size}
-				{rotationRandom}
-				alphaMap={textures[selectedTextureIndex]}
-				map={mapTextures[selectedMapIndex]}
-				{driftAmount}
-				{driftSpeed}
-				bind:start
-				bind:stop
-				on:stateChanged={stateChanged}
-			>
-				<T.RingGeometry args={[1.9, 2]} />
-			</Particles>
-		{/if}
 	{/if}
 {/key}
 
@@ -468,9 +428,6 @@
 <T.PerspectiveCamera makeDefault position={[-15, 5, 15]} fov={20}>
 	<OrbitControls autoRotate enableDamping autoRotateSpeed={1} target.y={1.5} />
 </T.PerspectiveCamera>
-
-<T.DirectionalLight intensity={0.8} position.x={5} position.y={10} />
-<T.AmbientLight intensity={0.2} />
 
 <Grid
 	gridSize={[10, 10]}

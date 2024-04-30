@@ -11,7 +11,6 @@
 		Mesh
 	} from 'three';
 	import { MeshSurfaceSampler } from 'three/examples/jsm/math/MeshSurfaceSampler.js';
-	import { createEventDispatcher } from 'svelte';
 	import {
 		randomPointInsideCube,
 		randomDirectionSpread,
@@ -22,78 +21,54 @@
 	import vertexShader from './particles-vertex.glsl?raw';
 	type Particle = { life: number };
 
-	/** Position of the emitter. You can update while the emitter is running. */
-	export let emitterPosition = { x: 0, y: 0, z: 0 };
-	/** Scale of the emitter. You can update while the emitter is running. */
-	export let emitterScale = { x: 0, y: 0, z: 0 };
-	/** Rotation of the emitter. You can update while the emitter is running. */
-	export let emitterRotation = { x: 0, y: 0, z: 0 };
-	/** The number of particles. */
-	export let count = 5;
-	/** The life of each particle in seconds. */
-	export let life = 2;
-	/** Value between 0 and 1. Emit particles one after another or all at once. */
-	export let explosiveness = 0;
-	/** Value between 0 and 360 degrees. Gives the particles a random direction within this range.  */
-	export let spread = 0;
-	// TODO: direction should be reactive?
-	/** Normalised direction vector. */
-	export let direction = { x: 0, y: 1, z: 0 };
-	/** Gravity direction vector. Higher numbers for stronger force. Gets stronger over life of particle. */
-	export let gravity = { x: 0, y: 0, z: 0 };
-	/** Gravity direction vector. Higher numbers for stronger force. Constant force over life of particle. */
-	export let wind = { x: 0, y: 0, z: 0 };
-	/** Use in combination with driftSpeed to give the particles random movement. */
-	export let driftAmount = 0;
-	/** Use in combination with driftAmount to give the particles random movement. */
-	export let driftSpeed = 0;
-	/** Initial particle force. */
-	export let velocity = 3;
-	/** Randomise the velocity by this amount in both diretions. */
-	export let velocityRandom = 0;
-	/** Size of particle over it's life. */
-	export let size: string | number = 3;
-	/** Randomise the size by this amount in both diretions. */
-	export let sizeRandom = 0;
-	/** Color of particle over it's life. */
-	export let color: string = '';
-	/** Value between 0 and 1 to randomise the hue. */
-	export let colorRandom = 0;
-	/** Value between 0 and 1 to randomise the lightness. */
-	export let lightnessRandom = 0;
-	/** Speed to rotate the texture. */
-	export let textureRotation = 0;
-	/** Randomise the rotation by this amount in both diretions. */
-	export let rotationRandom = 0;
-	/** Slow the particle to a stop over it's life. */
-	export let dampen = false;
-	/** Run the emitter once then stop. */
-	export let oneShot = false;
-	/** Clamp alpha map values for a hard edge stylised look */
-	export let clampAlpha = false;
-	/** Blend transparent particles for a glow effect */
-	export let additiveBlend = false;
-	/** Texture for alpha values. White is opaque black is transparent. */
-	export let alphaMap: Texture | undefined = undefined;
-	/** Texture */
-	export let map: Texture | undefined = undefined;
-	/** Show emitter outline. */
-	export let debug = false;
-	export let boundingSphereRadius = 5;
-
-	let position = new Vector3(emitterPosition.x, emitterPosition.y, emitterPosition.z);
+	let {
+		emitterPosition = { x: 0, y: 0, z: 0 },
+		emitterScale = { x: 0, y: 0, z: 0 },
+		emitterRotation = { x: 0, y: 0, z: 0 },
+		count = 5,
+		life = 2,
+		explosiveness = 0,
+		spread = 0,
+		direction = { x: 0, y: 1, z: 0 },
+		gravity = { x: 0, y: 0, z: 0 },
+		wind = { x: 0, y: 0, z: 0 },
+		driftAmount = 0,
+		driftSpeed = 0,
+		velocity = 3,
+		velocityRandom = 0,
+		size = 3,
+		sizeRandom = 0,
+		color = '',
+		colorRandom = 0,
+		lightnessRandom = 0,
+		textureRotation = 0,
+		rotationRandom = 0,
+		dampen = false,
+		oneShot = false,
+		clampAlpha = false,
+		additiveBlend = false,
+		alphaMap = undefined,
+		map = undefined,
+		debug = false,
+		boundingSphereRadius = 5,
+		start = $bindable(),
+		stop = $bindable(),
+		emitterStateChanged = (e: string): void => {},
+		customGeometry
+	}: any = $props();
+	
 	let directionVector = new Vector3(direction.x, direction.y, direction.z);
 	let emitterLife = 0;
-	let state = '';
+	let emitterState = '';
 	let newPosition: { x: number; y: number; z: number };
 	let paused = false;
 	let pausedTime: number;
 	let useAlphaMap = alphaMap ? 1 : 0;
 	let useMap = map ? 1 : 0;
-	let material: ShaderMaterial;
-	let emitterMesh: Mesh;
-	let useCustomGeometry = false;
+	let material: ShaderMaterial | undefined = $state();
+	let emitterMesh: Mesh | undefined = $state();
 	let sampler: MeshSurfaceSampler;
+	let newState = '';
 
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();
@@ -107,27 +82,30 @@
 	const randomAttribute = new Float32BufferAttribute(count, 1);
 	const parsedColorGradient = createGradientObject(color, 16);
 	const parsedSizeGradient = createGradientObject(size, 4);
-	const dispatch = createEventDispatcher();
 	const geometry = new BufferGeometry();
 	const particles: Particle[] = [];
 	const samplerVector = new Vector3();
 
-	export const start = () => {
-		if (state !== 'finished') {
-			console.warn('particles: start() was called but the emitter is ' + state + ', not finished.');
+	start = () => {
+		if (emitterState !== 'finished') {
+			console.warn(
+				'particles: start() was called but the emitter is ' + emitterState + ', not finished.'
+			);
 			return;
 		}
 		paused = false;
 		emitterLife = 0;
 	};
 
-	export const stop = () => {
+	stop = () => {
 		if (oneShot) {
 			console.warn('particles: stop() has no effect when oneShot is set to true.');
 			return;
 		}
-		if (state !== 'running') {
-			console.warn('particles: stop() was called but the emitter is ' + state + ', not running.');
+		if (emitterState !== 'running') {
+			console.warn(
+				'particles: stop() was called but the emitter is ' + emitterState + ', not running.'
+			);
 			return;
 		}
 		paused = true;
@@ -135,9 +113,7 @@
 	};
 
 	const stateChanged = () => {
-		dispatch('stateChanged', {
-			state
-		});
+		emitterStateChanged(emitterState);
 	};
 
 	if (map) map.flipY = false;
@@ -191,16 +167,17 @@
 	};
 
 	const positionNewParticle = (index: number) => {
-		if (useCustomGeometry) {
+		if (!emitterMesh) return;
+		if (customGeometry) {
 			sampler.sample(samplerVector);
 			emitterMesh.updateMatrix();
 			samplerVector.applyMatrix4(emitterMesh.matrix);
 			positionAttribute.setXYZ(index, samplerVector.x, samplerVector.y, samplerVector.z);
 		} else if (emitterScale.x > 0 || emitterScale.y > 0 || emitterScale.z > 0) {
-			newPosition = randomPointInsideCube(position, emitterScale);
+			newPosition = randomPointInsideCube(emitterPosition, emitterScale);
 			positionAttribute.setXYZ(index, newPosition.x, newPosition.y, newPosition.z);
 		} else {
-			positionAttribute.setXYZ(index, position.x, position.y, position.z);
+			positionAttribute.setXYZ(index, emitterPosition.x, emitterPosition.y, emitterPosition.z);
 		}
 	};
 
@@ -208,32 +185,28 @@
 		if (!geometry.boundingSphere) geometry.computeBoundingSphere();
 		if (!geometry.boundingSphere) return;
 		geometry.boundingSphere.radius = boundingSphereRadius;
-		geometry.boundingSphere.center = position;
+		geometry.boundingSphere.center = emitterPosition;
 	};
 
-	computeBounding();
-
-	const positionUpdated = (p: { x: number; y: number; z: number }) => {
-		position.x = p.x;
-		position.y = p.y;
-		position.z = p.z;
+	$effect.pre(() => {
+		emitterPosition.x,emitterPosition.x,emitterPosition.z;
 		computeBounding();
-	};
+	});
 
-	$: positionUpdated(emitterPosition);
-
-	const geometryLoaded = (d: Mesh) => {
-		if (!d || d.geometry.name === 'defaultBox' || !('position' in d.geometry.attributes)) return;
-		useCustomGeometry = true;
-		d.geometry = d.geometry.toNonIndexed();
-		sampler = new MeshSurfaceSampler(d).build();
-	};
-
-	$: geometryLoaded(emitterMesh);
+	$effect.pre(() => {
+		if (
+			!emitterMesh ||
+			emitterMesh.geometry.name === 'defaultBox' ||
+			!('position' in emitterMesh.geometry.attributes)
+		)
+			return;
+		emitterMesh.geometry = emitterMesh.geometry.toNonIndexed();
+		sampler = new MeshSurfaceSampler(emitterMesh).build();
+	});
 
 	useTask((delta) => {
 		emitterLife += delta;
-		let newState = 'running';
+		newState = 'running';
 		if (emitterLife < life) {
 			// emmitting new particles
 			newState = 'starting';
@@ -257,13 +230,13 @@
 				newState = 'finished';
 			}
 		}
-		if (state !== newState) {
-			state = newState;
+		if (emitterState !== newState) {
+			emitterState = newState;
 			stateChanged();
-			if (state === 'finished') distributePreBirthParticles();
+			if (emitterState === 'finished') distributePreBirthParticles();
 		}
 
-		if (state === 'starting') {
+		if (emitterState === 'starting') {
 			// move unborn particles to emitter position
 			particles.forEach((particle: Particle, index: number) => {
 				if (particle.life <= 0) {
@@ -271,13 +244,13 @@
 				}
 			});
 		}
-		if (state !== 'finished') {
+		if (emitterState !== 'finished') {
 			// update particles
 			particles.forEach((particle: Particle, index: number) => {
 				particle.life += delta;
 				if (particle.life > life) {
 					// particle died
-					if (state === 'running' && !paused) {
+					if (emitterState === 'running' && !paused) {
 						particle.life = 0;
 						positionNewParticle(index);
 					}
@@ -290,7 +263,7 @@
 	});
 </script>
 
-<T.Points {geometry} {...$$restProps} name="particles">
+<T.Points {geometry} name="particles">
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
 		bind:ref={material}
@@ -344,7 +317,7 @@
 				value: [gravity.x, gravity.y, gravity.z]
 			},
 			emitterPosition: {
-				value: position
+				value: emitterPosition
 			},
 			useClamp: {
 				value: clampAlpha ? 1 : 0
@@ -359,12 +332,14 @@
 <T.Mesh
 	bind:ref={emitterMesh}
 	scale={[emitterScale.x, emitterScale.y, emitterScale.z]}
-	position={[position.x, position.y, position.z]}
+	position={[emitterPosition.x, emitterPosition.y, emitterPosition.z]}
 	rotation={[emitterRotation.x, emitterRotation.y, emitterRotation.z]}
 	name="emitterDebugMesh"
 >
-	<slot>
+	{#if customGeometry}
+		{@render customGeometry()}
+	{:else}
 		<T.BoxGeometry name="defaultBox" />
-	</slot>
+	{/if}
 	<T.MeshBasicMaterial wireframe visible={debug} />
 </T.Mesh>
