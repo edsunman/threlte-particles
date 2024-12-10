@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
-	import { Grid, OrbitControls } from '@threlte/extras';
+	import { Grid } from '@threlte/extras';
+	//import OrbitControls from './OrbitControls.svelte';
 	import Particles from './emitter/Particles.svelte';
-	import { useTexture, TransformControls } from '@threlte/extras';
+	import { useTexture, TransformControls, OrbitControls } from '@threlte/extras';
 	import {
 		Pane,
 		Slider,
@@ -416,14 +417,16 @@
 
 {#if debug}
 	<T.Mesh
-		let:ref
 		bind:ref={box}
 		scale={[1, 1, 1]}
 		position={[emitterPosition.x, emitterPosition.y, emitterPosition.z]}
 	>
-		<TransformControls object={ref} />
+		{#snippet children({ ref })}
+    		<TransformControls object={ref} />
+  		{/snippet}
 	</T.Mesh>
 {/if}
+
 
 <T.PerspectiveCamera makeDefault position={[-15, 5, 15]} fov={20}>
 	<OrbitControls autoRotate enableDamping autoRotateSpeed={1} target.y={1.5} />

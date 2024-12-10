@@ -5,5 +5,12 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	ssr: {
 		noExternal: ['three']
+	},
+	optimizeDeps: {
+		esbuildOptions: {
+			loader: {
+				'.glsl': 'text'
+			}
+		}
 	}
 });

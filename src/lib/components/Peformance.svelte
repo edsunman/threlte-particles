@@ -10,13 +10,13 @@
 	let lastPeak = 0;
 	let deltaPeak = 0;
 	let lastDeltaPeak = 0;
-	let gpu = 0;
+	let gpu = $state(0);
 	let gpuPeak = 0;
 	let lastGpuPeak = 0;
 	let clock = 0;
 	let intervalCounter = 0;
-	let ms = 0;
-	let d = 0;
+	let ms = $state(0);
+	let d = $state(0);
 
 	const gl = renderer.getContext();
 	const ext = gl.getExtension('EXT_disjoint_timer_query_webgl2');
@@ -101,35 +101,35 @@
 
 	const mainDiv = document.createElement('div');
 	mainDiv.style.cssText =
-		'color:#fff;font-family:Roboto Mono, Source Code Pro, Menlo, Courier, monospace;font-size:11px;' +
+		'color:#fff;font-family:Roboto Mono, Source Code Pro, Menlo, Courier, monospace;font-size:11px;font-weight:400;' +
 		'position:absolute;z-index:100;background:hsl(230, 7%, 17%);margin:8px;padding:0 15px 12px;border-radius: 10px;';
 	const deltaNumbersDiv = createFlexDiv('delta', mainDiv, dCanvas);
 	const threlteNumbersDiv = createFlexDiv('js', mainDiv, tCanvas);
 	const gpuNumbersDiv = createFlexDiv('gpu', mainDiv, gCanvas);
 	document.body.prepend(mainDiv);
 
-	$: {
+	$effect(() => {
 		deltaNumbersDiv.innerHTML =
 			d.toFixed(1) +
 			'<span style="color:rgba(187, 188, 196, 0.7)"> : ' +
 			lastDeltaPeak.toFixed(1) +
 			'</span>';
-	}
-	$: {
+	});
+	$effect(() => {
 		threlteNumbersDiv.innerHTML =
 			ms.toFixed(1) + '<span style="color:rgba(187, 188, 196, 0.7)"> : ' + lastPeak.toFixed(1);
 		+'</span>';
-	}
-	$: {
+	});
+	$effect(() => {
 		gpuNumbersDiv.innerHTML =
 			gpu.toFixed(1) + '<span style="color:rgba(187, 188, 196, 0.7)"> : ' + lastGpuPeak.toFixed(1);
 		+'</span>';
-	}
+	});
 
 	useTask(
 		() => {
 			then = window.performance.now();
-			measureGpu();
+			if (ext) measureGpu();
 		},
 		{
 			stage: useStage('monitor-begin', {

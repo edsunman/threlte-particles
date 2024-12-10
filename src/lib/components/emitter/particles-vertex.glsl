@@ -91,9 +91,6 @@ void main() {
     // normlised lifetime; 0 = born, 1 - died
     vNormalLife = life / maxLifetime;
 
-    // reverse lifetime; 1 = born, 0 = died // maybe not needed??
-    vReverseNormalLife = 1.0 - vNormalLife;
-
     // dampen
     float dampenedLife = vNormalLife;
     if(dampen > 0.0) {

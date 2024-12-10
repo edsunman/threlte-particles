@@ -72,12 +72,10 @@
 	let pausedTime: number;
 	let useAlphaMap = alphaMap ? 1 : 0;
 	let useMap = map ? 1 : 0;
-	let material: ShaderMaterial | undefined = $state();
 	let emitterMesh: Mesh | undefined = $state();
 	let sampler: MeshSurfaceSampler;
 	let newState = '';
 
-	const points = new Points();
 	const { renderer } = useThrelte();
 	const pixelRatio = renderer.getPixelRatio();
 	const positionAttribute = new Float32BufferAttribute(count * 3, 3);
@@ -271,10 +269,9 @@
 	});
 </script>
 
-<T.Points bind:ref {geometry} name="particles" {...props}>
+<T.Points let:ref {geometry} name="particles" {...props}>
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
-		bind:ref={material}
 		{vertexShader}
 		{fragmentShader}
 		depthTest
