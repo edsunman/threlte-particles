@@ -269,7 +269,7 @@
 	});
 </script>
 
-<T.Points let:ref {geometry} name="particles" {...props}>
+<T.Points {geometry} name="particles" {...props}>
 	<T.ShaderMaterial
 		blending={additiveBlend ? AdditiveBlending : NormalBlending}
 		{vertexShader}
